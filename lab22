@@ -1,0 +1,60 @@
+#include <stdio.h>
+
+int predict(int pages[], int frames[], int n, int index, int f) {
+    int farthest = index, pos = -1;
+
+    for (int i = 0; i < f; i++) {
+        int j;
+        for (j = index; j < n; j++) {
+            if (frames[i] == pages[j]) {
+                if (j > farthest) {
+                    farthest = j;
+                    pos = i;
+                }
+                break;
+            }
+        }
+        if (j == n) return i;
+    }
+    return (pos == -1) ? 0 : pos;
+}
+
+int main() {
+    int pages[30], frames[10], n, f, faults = 0;
+
+    printf("Enter number of pages: ");
+    scanf("%d", &n);
+    printf("Enter page reference string: ");
+    for (int i = 0; i < n; i++) scanf("%d", &pages[i]);
+
+    printf("Enter number of frames: ");
+    scanf("%d", &f);
+
+    for (int i = 0; i < f; i++) frames[i] = -1;
+
+    for (int i = 0; i < n; i++) {
+        int found = 0;
+        for (int j = 0; j < f; j++)
+            if (frames[j] == pages[i]) found = 1;
+
+        if (!found) {
+            int empty = -1;
+            for (int j = 0; j < f; j++)
+                if (frames[j] == -1) { empty = j; break; }
+
+            if (empty != -1)
+                frames[empty] = pages[i];
+            else {
+                int pos = predict(pages, frames, n, i + 1, f);
+                frames[pos] = pages[i];
+            }
+            faults++;
+        }
+
+        printf("Frames: ");
+        for (int k = 0; k < f; k++) printf("%d ", frames[k]);
+        printf("\n");
+    }
+
+    printf("Total Page Faults = %d\n", faults);
+}
