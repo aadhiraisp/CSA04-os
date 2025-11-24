@@ -1,0 +1,16 @@
+Choice: 1
+Directory name: user1
+Directory created.
+
+Choice: 2
+Change to directory: user1
+Now in user1
+
+Choice: 4
+Filename: todo.txt
+Content: Finish homework
+File created.
+
+Choice: 5
+Files in user1:
+ - todo.txt
