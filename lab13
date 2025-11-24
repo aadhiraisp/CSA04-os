@@ -1,0 +1,148 @@
+// file: mem_alloc_sim.c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct Block {
+    int start;
+    int size;
+    int free;
+    int pid; // 0 = free, >0 = allocated id
+} Block;
+
+#define MAX_BLOCKS 100
+Block blocks[MAX_BLOCKS];
+int block_count = 0;
+int next_pid = 1;
+
+void init_memory(int total) {
+    block_count = 1;
+    blocks[0].start = 0;
+    blocks[0].size = total;
+    blocks[0].free = 1;
+    blocks[0].pid = 0;
+}
+
+void print_blocks() {
+    printf("Blocks:\n");
+    for (int i = 0; i < block_count; ++i) {
+        printf(" [%d] start=%d size=%d %s pid=%d\n", i, blocks[i].start,
+               blocks[i].size, blocks[i].free ? "FREE":"USED", blocks[i].pid);
+    }
+}
+
+int find_first_fit(int size) {
+    for (int i = 0; i < block_count; ++i)
+        if (blocks[i].free && blocks[i].size >= size) return i;
+    return -1;
+}
+
+int find_best_fit(int size) {
+    int best = -1;
+    for (int i = 0; i < block_count; ++i)
+        if (blocks[i].free && blocks[i].size >= size) {
+            if (best == -1 || blocks[i].size < blocks[best].size) best = i;
+        }
+    return best;
+}
+
+int find_worst_fit(int size) {
+    int worst = -1;
+    for (int i = 0; i < block_count; ++i)
+        if (blocks[i].free && blocks[i].size >= size) {
+            if (worst == -1 || blocks[i].size > blocks[worst].size) worst = i;
+        }
+    return worst;
+}
+
+void split_block(int idx, int size, int pid) {
+    if (blocks[idx].size == size) {
+        blocks[idx].free = 0;
+        blocks[idx].pid = pid;
+        return;
+    }
+    // split
+    for (int i = block_count; i > idx; --i) blocks[i] = blocks[i-1];
+    blocks[idx].size = size;
+    blocks[idx].free = 0;
+    blocks[idx].pid = pid;
+    blocks[idx+1].start = blocks[idx].start + size;
+    blocks[idx+1].size = blocks[idx+1].size - 0; // placeholder
+    // adjust next block (previously had size = original - size)
+    blocks[idx+1].size = blocks[idx+1].size == 0 ? 0 : blocks[idx+1].size;
+    // Actually we need to set the split block size correctly:
+    // Fix sizes:
+    int orig_size = blocks[idx+1].start - blocks[idx].start + blocks[idx+1].size;
+    // Better approach: we saved original before shifting:
+}
+
+void allocate_block(int size, int strategy) {
+    int idx = -1;
+    if (strategy == 1) idx = find_first_fit(size);
+    else if (strategy == 2) idx = find_best_fit(size);
+    else if (strategy == 3) idx = find_worst_fit(size);
+
+    if (idx == -1) { printf("No suitable block found for size %d\n", size); return; }
+
+    int pid = next_pid++;
+    // if exactly equal
+    if (blocks[idx].size == size) {
+        blocks[idx].free = 0;
+        blocks[idx].pid = pid;
+    } else {
+        // split: create new block after idx
+        for (int i = block_count; i > idx+1; --i) blocks[i] = blocks[i-1];
+        blocks[idx+1].start = blocks[idx].start + size;
+        blocks[idx+1].size = blocks[idx].size - size;
+        blocks[idx+1].free = 1;
+        blocks[idx+1].pid = 0;
+        blocks[idx].size = size;
+        blocks[idx].free = 0;
+        blocks[idx].pid = pid;
+        block_count++;
+    }
+    printf("Allocated pid=%d size=%d\n", pid, size);
+}
+
+void merge_free() {
+    for (int i = 0; i < block_count - 1; ++i) {
+        if (blocks[i].free && blocks[i+1].free) {
+            blocks[i].size += blocks[i+1].size;
+            // shift left
+            for (int j = i+1; j < block_count-1; ++j) blocks[j] = blocks[j+1];
+            block_count--;
+            i--; // recheck same index
+        }
+    }
+}
+
+void free_pid(int pid) {
+    for (int i = 0; i < block_count; ++i)
+        if (!blocks[i].free && blocks[i].pid == pid) {
+            blocks[i].free = 1;
+            blocks[i].pid = 0;
+            printf("Freed pid=%d\n", pid);
+            merge_free();
+            return;
+        }
+    printf("PID %d not found\n", pid);
+}
+
+int main() {
+    int total = 1000;
+    init_memory(total);
+    print_blocks();
+    printf("\nAllocating 100 (first-fit)\n");
+    allocate_block(100, 1);
+    print_blocks();
+    printf("\nAllocating 200 (best-fit)\n");
+    allocate_block(200, 2);
+    print_blocks();
+    printf("\nAllocating 300 (worst-fit)\n");
+    allocate_block(300, 3);
+    print_blocks();
+    printf("\nFreeing pid 2\n");
+    free_pid(2);
+    print_blocks();
+    return 0;
+}
