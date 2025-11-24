@@ -1,0 +1,63 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+int compare(const void *a, const void *b) {
+    return (*(int*)a - *(int*)b);
+}
+
+int main() {
+    int req[50], n, head, disk_size;
+    int left[50], right[50], l = 0, r = 0;
+
+    printf("Enter number of requests: ");
+    scanf("%d", &n);
+
+    printf("Enter disk requests: ");
+    for (int i = 0; i < n; i++)
+        scanf("%d", &req[i]);
+
+    printf("Enter initial head position: ");
+    scanf("%d", &head);
+
+    printf("Enter total disk size: ");
+    scanf("%d", &disk_size);
+
+    // Separate requests into left and right of head
+    for (int i = 0; i < n; i++) {
+        if (req[i] < head)
+            left[l++] = req[i];
+        else
+            right[r++] = req[i];
+    }
+
+    // Sort both sides
+    qsort(left, l, sizeof(int), compare);
+    qsort(right, r, sizeof(int), compare);
+
+    int total = 0;
+    int current = head;
+
+    printf("\nSCAN Order of servicing: ");
+    
+    // Move towards left end first
+    for (int i = l - 1; i >= 0; i--) {
+        total += abs(current - left[i]);
+        current = left[i];
+        printf("%d ", current);
+    }
+
+    // Reach track 0
+    total += current;  
+    current = 0;
+
+    // Then move towards right end
+    for (int i = 0; i < r; i++) {
+        total += abs(current - right[i]);
+        current = right[i];
+        printf("%d ", current);
+    }
+
+    printf("\nTotal Head Movement = %d\n", total);
+
+    return 0;
+}
