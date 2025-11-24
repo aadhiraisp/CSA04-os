@@ -1,0 +1,23 @@
+// mutex_sync.c
+#include <stdio.h>
+#include <pthread.h>
+#define NTHREADS 5
+int counter=0;
+pthread_mutex_t m;
+void* inc(void* arg){
+    for(int i=0;i<10000;i++){
+        pthread_mutex_lock(&m);
+        counter++;
+        pthread_mutex_unlock(&m);
+    }
+    return NULL;
+}
+int main(){
+    pthread_t t[NTHREADS];
+    pthread_mutex_init(&m,NULL);
+    for(int i=0;i<NTHREADS;i++) pthread_create(&t[i],NULL,inc,NULL);
+    for(int i=0;i<NTHREADS;i++) pthread_join(t[i],NULL);
+    printf("Final counter: %d\n",counter);
+    pthread_mutex_destroy(&m);
+    return 0;
+}
