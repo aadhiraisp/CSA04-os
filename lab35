@@ -1,0 +1,34 @@
+// banker.c
+#include <stdio.h>
+#include <stdbool.h>
+int main(){
+    int n,m,i,j;
+    printf("n m: "); scanf("%d%d",&n,&m);
+    int alloc[n][m], max[n][m], need[n][m], avail[m];
+    for(i=0;i<n;i++) for(j=0;j<m;j++) { printf("alloc[%d][%d]: ",i,j); scanf("%d",&alloc[i][j]); }
+    for(i=0;i<n;i++) for(j=0;j<m;j++) { printf("max[%d][%d]: ",i,j); scanf("%d",&max[i][j]); }
+    printf("available: "); for(j=0;j<m;j++) scanf("%d",&avail[j]);
+    for(i=0;i<n;i++) for(j=0;j<m;j++) need[i][j]=max[i][j]-alloc[i][j];
+    int work[m]; for(j=0;j<m;j++) work[j]=avail[j];
+    bool finish[n]; for(i=0;i<n;i++) finish[i]=false;
+    int count=0; int safeSeq[n];
+    while(count<n){
+        bool found=false;
+        for(i=0;i<n;i++){
+            if(!finish[i]){
+                bool ok=true;
+                for(j=0;j<m;j++) if(need[i][j]>work[j]){ ok=false; break; }
+                if(ok){
+                    for(j=0;j<m;j++) work[j]+=alloc[i][j];
+                    safeSeq[count++]=i; finish[i]=true; found=true;
+                }
+            }
+        }
+        if(!found) break;
+    }
+    if(count==n){
+        printf("System is SAFE. Safe sequence: ");
+        for(i=0;i<n;i++) printf("P%d ",safeSeq[i]);
+    } else printf("System is NOT SAFE (unsafe).");
+    return 0;
+}
