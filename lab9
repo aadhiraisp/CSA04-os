@@ -1,0 +1,39 @@
+#include <stdio.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+int main() {
+    // Create shared memory
+    int shid = shmget(1234, 1024, IPC_CREAT | 0666);
+    if (shid < 0) {
+        printf("Shared memory creation failed!\n");
+        return 1;
+    }
+
+    // Attach shared memory
+    char *shared_msg = (char*) shmat(shid, NULL, 0);
+
+    if (fork() == 0) {
+        // ---- CHILD ----
+        sleep(1); // wait for parent
+        printf("\nChild read: %s\n", shared_msg);
+        shmdt(shared_msg);
+    } 
+    else {
+        // ---- PARENT ----
+        char input[100];
+        printf("Enter a message: ");
+        fgets(input, sizeof(input), stdin);
+
+        strcpy(shared_msg, input);
+        printf("Parent wrote: %s\n", shared_msg);
+
+        wait(NULL);  // Wait for child
+        shmdt(shared_msg);
+    }
+
+    return 0;
+}
