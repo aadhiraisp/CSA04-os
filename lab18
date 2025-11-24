@@ -1,0 +1,13 @@
+1.Create 2.Delete 3.List 4.Read 5.Exit
+Choice: 1
+Filename: notes.txt
+Content: My notes
+File created.
+
+Choice: 3
+Files:
+ - notes.txt
+
+Choice: 4
+Filename: notes.txt
+Content: My notes
